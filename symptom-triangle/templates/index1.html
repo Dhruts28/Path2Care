@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Symptom Triage</title>
+  <style>
+    body { font-family: Arial; margin: 40px; max-width: 600px; }
+    textarea, button { width: 100%; padding: 10px; margin-top: 10px; }
+    #result { margin-top: 20px; font-weight: bold; white-space: pre-line; }
+  </style>
+</head>
+<body>
+  <h2>Enter Your Symptoms</h2>
+  <textarea id="symptoms" rows="5" placeholder="e.g. I have chest pain and trouble breathing"></textarea>
+  <button onclick="submitSymptoms()">Check Priority</button>
+  <div id="result"></div>
+
+  <script>
+    async function submitSymptoms() {
+      const symptoms = document.getElementById("symptoms").value;
+      const response = await fetch("/classify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symptoms })
+      });
+      const data = await response.json();
+      const output = data.departments.length > 0
+        ? "Recommended Departments:\n" + data.departments.join(", ")
+        : "No matching department found. Please describe your symptoms more clearly.";
+      document.getElementById("result").innerText = output;
+    }
+  </script>
+</body>
+</html>

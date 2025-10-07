@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Symptom Triage</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: url("/static/bg.jpg") no-repeat center center/cover;
+      overflow-x: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      height: 100%;
+      width: 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background-color: rgba(0,0,0,0.9);
+      overflow-x: hidden;
+      transition: 0.5s;
+      padding-top: 60px;
+      color: white;
+    }
+    .sidebar a {
+      padding: 10px 20px;
+      text-decoration: none;
+      font-size: 18px;
+      color: white;
+      display: block;
+      transition: 0.3s;
+    }
+    .sidebar a:hover {
+      background: rgba(255,255,255,0.2);
+    }
+    .sidebar .closebtn {
+      position: absolute;
+      top: 20px;
+      right: 25px;
+      font-size: 30px;
+      cursor: pointer;
+    }
+
+    /* Main content */
+    #main {
+      transition: margin-left 0.5s;
+      padding: 20px;
+      text-align: center;
+      color: white;
+    }
+
+    .content-box {
+      background: rgba(0,0,0,0.6);
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    textarea, button, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 6px;
+      border: none;
+      font-size: 16px;
+    }
+    button {
+      background: #007BFF;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+
+    #result, #doctors {
+      margin-top: 20px;
+      font-weight: bold;
+      white-space: pre-line;
+    }
+
+    .doctor-card {
+      background: white;
+      color: black;
+      border-radius: 8px;
+      padding: 10px;
+      margin: 10px;
+      display: inline-block;
+      width: 150px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <div id="mySidebar" class="sidebar">
+    <span class="closebtn" onclick="closeSidebar()">&times;</span>
+    <a href="#" onclick="showSpecialists()">Explore our Specialists</a>
+  </div>
+
+  <!-- Main content -->
+  <div id="main">
+    <span style="font-size:25px;cursor:pointer;color:white;" onclick="openSidebar()">&#9776; Menu</span>
+
+    <div class="content-box">
+      <h2>Hello User,</h2>
+      <p>How can I assist you today?<br>If you are having some difficulties, write your symptoms here.</p>
+      <textarea id="symptoms" rows="5" placeholder="e.g. I have chest pain and trouble breathing"></textarea>
+      <button onclick="submitSymptoms()">Check Priority</button>
+      <div id="result"></div>
+    </div>
+
+    <!-- Specialist section -->
+    <div id="specialists-section" style="margin-top:40px; display:none;">
+      <h2>Our Specialists</h2>
+      <select id="specialtyDropdown" onchange="displayDoctors()">
+        <option value="">-- Select Specialty --</option>
+        <option value="Cardiology">Cardiology</option>
+        <option value="Pulmonology">Pulmonology</option>
+        <option value="Neurology">Neurology</option>
+        <option value="Gastroenterology">Gastroenterology</option>
+      </select>
+      <div id="doctors"></div>
+    </div>
+  </div>
+
+  <script>
+    // Sidebar functions
+    function openSidebar() {
+      document.getElementById("mySidebar").style.width = "250px";
+      document.getElementById("main").style.marginLeft = "250px";
+    }
+    function closeSidebar() {
+      document.getElementById("mySidebar").style.width = "0";
+      document.getElementById("main").style.marginLeft = "0";
+    }
+
+    // Symptom classification
+    async function submitSymptoms() {
+      const symptoms = document.getElementById("symptoms").value;
+      const response = await fetch("/classify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symptoms })
+      });
+      const data = await response.json();
+      const output = data.departments.length > 0
+        ? "Recommended Departments:\n" + data.departments.join(", ")
+        : "No matching department found. Please describe your symptoms more clearly.";
+      document.getElementById("result").innerText = output;
+    }
+
+    // Specialist dropdown
+    function showSpecialists() {
+      document.getElementById("specialists-section").style.display = "block";
+      closeSidebar();
+    }
+
+    function displayDoctors() {
+      const doctorsDiv = document.getElementById("doctors");
+      const specialty = document.getElementById("specialtyDropdown").value;
+      doctorsDiv.innerHTML = "";
+
+      const doctors = {
+        "Cardiology": ["Dr. Smith (Cardiologist)", "Dr. Johnson (Heart Specialist)", "Dr. Patel (Cardiac Surgeon)"],
+        "Pulmonology": ["Dr. Lee (Pulmonologist)", "Dr. Chen (Respiratory Specialist)", "Dr. Kumar (Asthma Expert)"],
+        "Neurology": ["Dr. Brown (Neurologist)", "Dr. White (Stroke Specialist)", "Dr. Garcia (Seizure Expert)"],
+        "Gastroenterology": ["Dr. Wilson (GI Specialist)", "Dr. Martinez (Liver Expert)", "Dr. Singh (Digestive Care)"]
+      };
+
+      if (specialty && doctors[specialty]) {
+        doctors[specialty].forEach(doc => {
+          const card = document.createElement("div");
+          card.className = "doctor-card";
+          card.innerText = doc;
+          doctorsDiv.appendChild(card);
+        });
+      }
+    }
+  </script>
+</body>
+</html>
